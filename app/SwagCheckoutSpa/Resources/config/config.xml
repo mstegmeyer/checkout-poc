@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/trunk/src/Core/System/SystemConfig/Schema/config.xsd">
+    <card>
+        <title>Checkout SPA</title>
+        <title lang="de-DE">Checkout SPA</title>
+
+        <input-field type="bool">
+            <name>enabled</name>
+            <label>Enable SPA checkout</label>
+            <label lang="de-DE">SPA-Checkout aktivieren</label>
+            <helpText>When enabled, the storefront checkout buttons point to the SPA checkout page and the SPA page is rendered. When disabled, the storefront behaves exactly like before.</helpText>
+            <helpText lang="de-DE">Wenn aktiv, verweisen die Checkout-Buttons im Storefront auf die SPA-Checkout-Seite und die SPA-Seite wird ausgeliefert. Wenn inaktiv, verhält sich der Storefront unverändert.</helpText>
+            <defaultValue>false</defaultValue>
+        </input-field>
+
+        <input-field type="text">
+            <name>bundleUrl</name>
+            <label>Bundle URL</label>
+            <label lang="de-DE">Bundle-URL</label>
+            <helpText>Base URL the SPA bundle is served from. The app loads &lt;bundleUrl&gt;/checkout.js and &lt;bundleUrl&gt;/checkout.css. A trailing slash is trimmed automatically.</helpText>
+            <helpText lang="de-DE">Basis-URL, von der das SPA-Bundle geladen wird. Die App lädt &lt;bundleUrl&gt;/checkout.js und &lt;bundleUrl&gt;/checkout.css. Ein abschließender Schrägstrich wird automatisch entfernt.</helpText>
+            <defaultValue>http://localhost:8080</defaultValue>
+        </input-field>
+    </card>
+</config>

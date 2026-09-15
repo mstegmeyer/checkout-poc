@@ -1,0 +1,12 @@
+# dependencies / build output
+node_modules/
+dist/
+.e2e-build/
+
+# local tooling & IDE (machine-specific absolute paths)
+.claude/
+.idea/
+
+# noise
+*.log
+.DS_Store

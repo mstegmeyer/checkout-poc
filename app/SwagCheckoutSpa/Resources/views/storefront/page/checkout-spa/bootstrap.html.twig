@@ -1,0 +1,30 @@
+{#
+    The SPA mount point, shared by the standalone checkout page (script endpoint) and the
+    overrides of the commercial plugin's dedicated subscription checkout pages.
+
+    Expects `subscriptionBundle` (object with `planId` / `intervalId`, or null). Everything else
+    is read from the request and the sales channel context. No context token is rendered — see
+    page/checkout-spa/index.html.twig for why.
+#}
+{% set spaLocale = context.languageInfo ? context.languageInfo.localeCode : app.request.locale %}
+
+{% set spaBootstrap = {
+    accessKey: context.salesChannel.accessKey,
+    apiBase: app.request.schemeAndHttpHost,
+    storefrontUrl: app.request.attributes.get('sw-storefront-url'),
+    shopName: config('core.basicInformation.shopName') ?: context.salesChannel.translated.name,
+    currency: context.currency.isoCode,
+    locale: spaLocale,
+    language: spaLocale,
+    cartPageUrl: path('frontend.checkout.cart.page'),
+    homeUrl: path('frontend.home.page'),
+    registration: {
+        showPhoneNumber: config('core.loginRegistration.showPhoneNumberField'),
+        phoneNumberRequired: config('core.loginRegistration.phoneNumberFieldRequired'),
+        requireDataProtection: config('core.loginRegistration.requireDataProtectionCheckbox'),
+        passwordMinLength: config('core.loginRegistration.passwordMinLength')
+    },
+    subscription: subscriptionBundle|default(null)
+} %}
+
+<div id="checkout-app" data-bootstrap="{{ spaBootstrap|json_encode|escape('html_attr') }}"></div>

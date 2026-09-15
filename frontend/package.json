@@ -1,0 +1,25 @@
+{
+  "name": "@swag/checkout-spa",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Standalone Vue guest checkout for Shopware (store-api only)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit",
+    "e2e:build": "vite build --config vite.e2e.config.ts",
+    "e2e": "npm run e2e:build && node scripts/e2e-api.mjs"
+  },
+  "dependencies": {
+    "pinia": "^3.0.3",
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.1",
+    "typescript": "^5.9.3",
+    "vite": "^7.1.7",
+    "vue-tsc": "^3.1.1"
+  }
+}

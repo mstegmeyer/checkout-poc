@@ -1,0 +1,70 @@
+{% sw_extends {
+    template: '@Storefront/storefront/page/checkout/confirm/index.html.twig',
+    scopes: ['subscription']
+} %}
+
+{#
+    Dedicated subscription checkout of the commercial Subscriptions plugin ("bubble").
+
+    "Subscribe now" on a product page puts the product into a *separate* subscription cart and sends
+    the shopper to /subscription/checkout/register/{subscriptionToken} (guests) or
+    /subscription/checkout/confirm/{subscriptionToken} (logged in). Both are rendered in the Twig
+    template scope `subscription`, where `context` is the subscription context. This override
+    renders the SPA there and hands it the bundle (plan + interval) so it talks to the plugin's
+    `/store-api/subscription/*` twins for exactly that cart. Nothing else changes: same bundle,
+    same session-based store-api access, the shopper's own cart stays parked.
+
+    Toggle off => the commercial plugin's own pages render unchanged.
+#}
+
+{% set spaEnabled = config('SwagCheckoutSpa.config.enabled') and context.extension('subscription') %}
+
+{% block base_head %}
+    {{ parent() }}
+
+    {% if spaEnabled %}
+        {% set spaBundleUrl = config('SwagCheckoutSpa.config.bundleUrl')|default('')|trim %}
+        {% if spaBundleUrl ends with '/' %}
+            {% set spaBundleUrl = spaBundleUrl|slice(0, -1) %}
+        {% endif %}
+        <link rel="stylesheet" href="{{ spaBundleUrl }}/checkout.css">
+    {% endif %}
+{% endblock %}
+
+{% block base_body_skip_to_content %}{% if not spaEnabled %}{{ parent() }}{% endif %}{% endblock %}
+{% block base_esi_header %}{% if not spaEnabled %}{{ parent() }}{% endif %}{% endblock %}
+{% block base_esi_footer %}{% if not spaEnabled %}{{ parent() }}{% endif %}{% endblock %}
+{% block base_navigation_styling %}{% if not spaEnabled %}{{ parent() }}{% endif %}{% endblock %}
+{% block base_flashbags %}{% if not spaEnabled %}{{ parent() }}{% endif %}{% endblock %}
+{% block base_scroll_up %}{% if not spaEnabled %}{{ parent() }}{% endif %}{% endblock %}
+
+{% block base_main_inner %}
+    {% if spaEnabled %}
+        {% sw_include '@SwagCheckoutSpa/storefront/page/checkout-spa/bootstrap.html.twig' with {
+            subscriptionBundle: {
+                planId: context.extension('subscription').plan.id,
+                intervalId: context.extension('subscription').interval.id,
+                planName: context.extension('subscription').plan.translated.name,
+                intervalName: context.extension('subscription').interval.translated.name,
+                discountPercentage: context.extension('subscription').plan.discountPercentage,
+                minimumExecutionCount: context.extension('subscription').plan.minimumExecutionCount,
+                nextSchedule: context.extension('subscription').nextSchedule|date('c'),
+                delayed: context.extension('subscription').interval.delayed
+            }
+        } %}
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}
+
+{% block base_body_script %}
+    {{ parent() }}
+
+    {% if spaEnabled %}
+        {% set spaBundleUrl = config('SwagCheckoutSpa.config.bundleUrl')|default('')|trim %}
+        {% if spaBundleUrl ends with '/' %}
+            {% set spaBundleUrl = spaBundleUrl|slice(0, -1) %}
+        {% endif %}
+        <script type="module" src="{{ spaBundleUrl }}/checkout.js"></script>
+    {% endif %}
+{% endblock %}

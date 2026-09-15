@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Checkout SPA — standalone dev harness</title>
+    </head>
+    <body>
+        <!--
+            STANDALONE DEV HARNESS (never shipped: the production build only emits
+            dist/checkout.js + dist/checkout.css).
+
+            It replicates what the Shopware app template renders:
+                <div id="checkout-app" data-bootstrap='{…}'></div>
+
+            No secrets are committed here — the sales channel access key is read
+            from the URL query or localStorage at dev time:
+
+              1. Get the access key of your sales channel:
+                   bin/console sales-channel:list
+                 (or: SELECT name, access_key FROM sales_channel …)
+
+              2. Open the dev server once with the parameters, they are persisted
+                 in localStorage afterwards:
+
+                   http://localhost:5173/?accessKey=SWSC…&apiBase=http://localhost:8000&storefrontUrl=http://localhost:8000
+
+                 Supported query params (all optional except accessKey):
+                   accessKey, apiBase, storefrontUrl, contextToken, shopName,
+                   currencyIso, locale, phoneRequired, passwordMinLength,
+                   subscriptionPlan + subscriptionInterval (dedicated subscription checkout),
+                   proxy=1 (same-origin store-api via the Vite proxy; needed for
+                   plugin headers the shop's CORS list does not cover)
+
+              3. Fill the cart first (the SPA never adds products): open the
+                 storefront, add an article, then copy its `sw-context-token`
+                 into `contextToken` — or let the harness create an empty
+                 context and use the "cart is empty" view.
+
+              Reset with:  localStorage.removeItem('checkout-spa:dev-bootstrap')
+        -->
+        <div id="checkout-app"></div>
+
+        <noscript>This checkout requires JavaScript.</noscript>
+
+        <script>
+            (function () {
+                var STORAGE_KEY = 'checkout-spa:dev-bootstrap';
+                var params = new URLSearchParams(window.location.search);
+                var stored = {};
+
+                try {
+                    stored = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || '{}');
+                } catch (error) {
+                    stored = {};
+                }
+
+                function value(name, fallback) {
+                    var fromQuery = params.get(name);
+                    if (fromQuery !== null && fromQuery !== '') return fromQuery;
+                    if (stored[name] !== undefined && stored[name] !== '') return stored[name];
+                    return fallback;
+                }
+
+                // proxy=1: call the store-api same-origin through Vite's dev proxy
+                // (vite.config.ts) — avoids CORS, which blocks plugin-added headers.
+                var useProxy = value('proxy', 'false') === '1' || value('proxy', 'false') === 'true';
+                var apiBase = useProxy ? '' : value('apiBase', 'http://localhost:8000').replace(/\/+$/, '');
+                var storefrontUrl = value('storefrontUrl', apiBase || 'http://localhost:8000').replace(/\/+$/, '');
+                // Mirrors the keys emitted by the Shopware app template.
+                var config = {
+                    accessKey: value('accessKey', ''),
+                    contextToken: value('contextToken', ''),
+                    apiBase: apiBase,
+                    storefrontUrl: storefrontUrl,
+                    shopName: value('shopName', 'Dev Storefront'),
+                    currency: value('currency', 'EUR'),
+                    locale: value('locale', 'en-GB'),
+                    language: value('locale', 'en-GB'),
+                    cartPageUrl: value('cartPageUrl', storefrontUrl + '/checkout/cart'),
+                    homeUrl: value('homeUrl', storefrontUrl),
+                    registration: {
+                        showPhoneNumber: value('showPhoneNumber', 'true') === 'true',
+                        phoneNumberRequired: value('phoneRequired', 'false') === 'true',
+                        requireDataProtection: false,
+                        passwordMinLength: Number(value('passwordMinLength', '8')),
+                    },
+                    // Dedicated subscription checkout: both ids or nothing.
+                    subscription:
+                        value('subscriptionPlan', '') && value('subscriptionInterval', '')
+                            ? {
+                                  planId: value('subscriptionPlan', ''),
+                                  intervalId: value('subscriptionInterval', ''),
+                                  planName: value('subscriptionPlanName', ''),
+                                  intervalName: value('subscriptionIntervalName', ''),
+                              }
+                            : null,
+                };
+
+                try {
+                    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
+                } catch (error) {
+                    /* private mode — carry on with the in-memory config */
+                }
+
+                var mount = document.getElementById('checkout-app');
+
+                if (!config.accessKey) {
+                    mount.innerHTML =
+                        '<h1>Checkout SPA dev harness</h1>' +
+                        '<p>No <code>accessKey</code> configured. Append it to the URL:</p>' +
+                        '<pre>?accessKey=SWSC…&amp;apiBase=http://localhost:8000&amp;storefrontUrl=http://localhost:8000</pre>' +
+                        '<p>Read the comment in <code>index.html</code> for details.</p>';
+                    return;
+                }
+
+                mount.setAttribute('data-bootstrap', JSON.stringify(config));
+            })();
+        </script>
+
+        <script type="module" src="/src/main.ts"></script>
+    </body>
+</html>

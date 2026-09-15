@@ -1,0 +1,28 @@
+{% sw_extends {
+    template: '@Storefront/storefront/component/checkout/offcanvas-cart.html.twig',
+    scopes: ['default', 'mixed-subscription']
+} %}
+
+{#
+    Re-points the offcanvas cart's "proceed to checkout" button to the SPA checkout page.
+    Markup/classes/snippets are a copy of the core block so the theme styling is untouched.
+    When the app config toggle is off, the core block is rendered unchanged.
+
+    Scopes: the commercial Subscriptions plugin renders the cart pages of a cart that contains a
+    recurring bundle in the Twig scope `mixed-subscription` only (the `default` scope is dropped there),
+    and core skips every extension whose scopes do not match. Without listing that scope this override
+    would silently fall back to the core checkout as soon as a subscription is in the cart.
+#}
+{% block component_offcanvas_cart_actions_checkout %}
+    {% if config('SwagCheckoutSpa.config.enabled') %}
+        <div class="d-grid">
+            <a href="{{ path('frontend.script_endpoint', { hook: 'checkout' }) }}"
+               class="btn begin-checkout-btn mb-2{% if isCartNotEmpty %} btn-primary{% else %} btn-light disabled{% endif %}"
+               title="{{ 'checkout.proceedToCheckout'|trans|striptags }}">
+                {{ 'checkout.proceedToCheckout'|trans|sw_sanitize }}
+            </a>
+        </div>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

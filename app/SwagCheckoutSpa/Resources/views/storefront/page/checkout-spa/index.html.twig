@@ -1,0 +1,67 @@
+{% sw_extends '@Storefront/storefront/base.html.twig' %}
+
+{#
+    Standalone checkout page rendered by the app script `Resources/scripts/storefront-checkout/script.twig`
+    (URL: /storefront/script/checkout).
+
+    It keeps the theme <head> (CSS, meta, theme JS) intact, but strips header, navigation and footer so the
+    Vue SPA owns the whole viewport. Everything the SPA needs is server-rendered into
+    `#checkout-app[data-bootstrap]` — but *not* the context token: the SPA calls the store-api same-origin
+    with the storefront session cookie and `sw-context-source: session`, so the store-api resolves the
+    context from that session. The SPA therefore continues the exact cart the customer had in the
+    storefront, without a token ever touching the page.
+
+    The commercial plugin's dedicated subscription checkout is served by the scoped overrides in
+    page/checkout/address/ and page/checkout/confirm/ instead (same mount, plus the bundle ids).
+#}
+
+{% block base_head %}
+    {{ parent() }}
+
+    {% set spaBundleUrl = config('SwagCheckoutSpa.config.bundleUrl')|default('')|trim %}
+    {% if spaBundleUrl ends with '/' %}
+        {% set spaBundleUrl = spaBundleUrl|slice(0, -1) %}
+    {% endif %}
+
+    {% block checkout_spa_styles %}
+        <link rel="stylesheet" href="{{ spaBundleUrl }}/checkout.css">
+    {% endblock %}
+{% endblock %}
+
+{# --- strip everything the storefront normally wraps around the page content --- #}
+
+{% block base_body_skip_to_content %}{% endblock %}
+
+{# 6.7 renders header/footer via ESI sub requests #}
+{% block base_esi_header %}{% endblock %}
+{% block base_esi_footer %}{% endblock %}
+
+{% block base_navigation_styling %}{% endblock %}
+{% block base_flashbags %}{% endblock %}
+{% block base_scroll_up %}{% endblock %}
+
+{# --- the SPA mount point --- #}
+
+{% block base_main_inner %}
+    {% block checkout_spa %}
+        {# No context token here on purpose. The SPA sends its store-api calls with the storefront
+           session cookie and `sw-context-source: session` instead of a token header; the store-api
+           resolves the token from the session and writes rotations (guest registration) back into it.
+           Nothing to render, nothing to leak, nothing to keep in sync — and 6.7's Twig guard on
+           context.token is simply respected. #}
+        {% sw_include '@SwagCheckoutSpa/storefront/page/checkout-spa/bootstrap.html.twig' with { subscriptionBundle: null } %}
+    {% endblock %}
+{% endblock %}
+
+{% block base_body_script %}
+    {{ parent() }}
+
+    {% set spaBundleUrl = config('SwagCheckoutSpa.config.bundleUrl')|default('')|trim %}
+    {% if spaBundleUrl ends with '/' %}
+        {% set spaBundleUrl = spaBundleUrl|slice(0, -1) %}
+    {% endif %}
+
+    {% block checkout_spa_script %}
+        <script type="module" src="{{ spaBundleUrl }}/checkout.js"></script>
+    {% endblock %}
+{% endblock %}

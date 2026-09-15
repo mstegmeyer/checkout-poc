@@ -1,0 +1,19 @@
+{# Storefront script endpoint: GET|POST /storefront/script/checkout (route: frontend.script_endpoint) #}
+
+{% if not services.config.app('enabled') %}
+    {# App switched off => behave like the SPA does not exist and send the customer back to the cart. #}
+    {% set response = services.response.redirect('frontend.checkout.cart.page', {}) %}
+
+    {% do hook.setResponse(response) %}
+{% else %}
+    {% set response = services.response.render('@SwagCheckoutSpa/storefront/page/checkout-spa/index.html.twig', {
+        'page': hook.page
+    }) %}
+
+    {# The page no longer carries the context token, so there is no token left to leak. It is still a
+       personalized page (it is the shopper's checkout), so no-store stays as defense in depth against
+       any HTTP cache/CDN serving one visitor's checkout to another. #}
+    {% do response.setHeader('Cache-Control', 'no-store, private') %}
+
+    {% do hook.setResponse(response) %}
+{% endif %}

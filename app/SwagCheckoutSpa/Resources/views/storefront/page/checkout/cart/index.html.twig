@@ -1,0 +1,28 @@
+{% sw_extends {
+    template: '@Storefront/storefront/page/checkout/cart/index.html.twig',
+    scopes: ['default', 'mixed-subscription']
+} %}
+
+{#
+    Re-points the cart page's "proceed to checkout" button to the SPA checkout page.
+    Markup/classes/snippets are a copy of the core block so the theme styling is untouched.
+    When the app config toggle is off, the core block is rendered unchanged.
+
+    Scopes: the commercial Subscriptions plugin renders the cart pages of a cart that contains a
+    recurring bundle in the Twig scope `mixed-subscription` only (the `default` scope is dropped there),
+    and core skips every extension whose scopes do not match. Without listing that scope this override
+    would silently fall back to the core checkout as soon as a subscription is in the cart.
+#}
+{% block page_checkout_cart_action_proceed %}
+    {% if config('SwagCheckoutSpa.config.enabled') %}
+        <div class="checkout-aside-action d-grid">
+            <a href="{{ path('frontend.script_endpoint', { hook: 'checkout' }) }}"
+               class="btn btn-primary btn-lg begin-checkout-btn"
+               title="{{ 'checkout.proceedLink'|trans|striptags }}">
+                {{ 'checkout.proceedLink'|trans|sw_sanitize }}
+            </a>
+        </div>
+    {% else %}
+        {{ parent() }}
+    {% endif %}
+{% endblock %}

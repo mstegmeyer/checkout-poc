@@ -1,0 +1,1509 @@
+/*
+ * Checkout SPA — visual design (Phase C).
+ *
+ * Source of truth: Figma "Shopware Checkout 2026" (file QS2q4ZX41RL0mUM3JWDX1D),
+ * frames 388:8652 / 444:1493 / 425:9335 / 391:9050 / 444:1262 / 443:10698 /
+ * 444:1795. Every colour, radius, type size and weight below comes from that
+ * file's variables (Meteor design system) — see the TOKENS block.
+ *
+ * Rules of the road:
+ *  - all styling lives here (imported by `src/main.ts`); components ship *no*
+ *    <style> blocks
+ *  - class names are BEM-ish and stable: `c-*` = component, `v-*` = view,
+ *    `checkout*` = shell
+ *  - the bundle is loaded inside a Shopware storefront page whose theme CSS is
+ *    already present, so *every* rule is prefixed with `#checkout-app`. That
+ *    buys specificity 1,1,0 — enough to beat any theme class or element rule
+ *    without a single `!important`.
+ *  - mobile-first: the Figma frames are 376 px wide. Two breakpoints only:
+ *    30rem (centred column) and 60rem (summary moves into a sticky aside).
+ */
+
+/* ------------------------------------------------------------------ TOKENS */
+
+#checkout-app {
+    /* Colours — Figma variable → property
+     * color/zinc/0, color/static/white, color/background/primary/default,
+     * color/elevation/surface/default (#ffffff)      → --co-color-surface
+     * color/zinc/50 (#fafbfe)                        → --co-color-surface-muted
+     * color/slate/100 (#f0f3ff)                      → --co-color-border-muted
+     * color/zinc/100 (#e2e3e9)                       → --co-color-border-subtle
+     * color/border/primary/default (#cdced4)         → --co-color-border
+     * color/border|text|icon|interaction/brand|primary/default (#0870ff)
+     *                                                → --co-color-brand
+     * color/interaction/primary/disabled (#76aaff)   → --co-color-brand-disabled
+     * color/zinc/800 (#2d2e32)                       → --co-color-heading
+     * color/text|icon/primary/default (#1e1e24)      → --co-color-text
+     * color/text/secondary/default, color/zinc/600 (#696a6e)
+     *                                                → --co-color-text-secondary
+     * color/zinc/500 (#838489)                       → --co-color-text-muted
+     * color/zinc/400 (#a5a6ab)                       → --co-color-text-subtle
+     * color/text/primary/disabled (#b9babf)          → --co-color-text-disabled
+     * color/emerald/600 (#00b472)                    → --co-color-success
+     * color/slate/800 (#474a57)                      → --co-color-logo
+     * color/static/black (#09090b)                   → --co-color-shadow base
+     */
+    --co-color-surface: #ffffff;
+    --co-color-surface-muted: #fafbfe;
+    --co-color-border-muted: #f0f3ff;
+    --co-color-border-subtle: #e2e3e9;
+    --co-color-border: #cdced4;
+    --co-color-border-focus: #0870ff;
+    --co-color-brand: #0870ff;
+    --co-color-brand-disabled: #76aaff;
+    --co-color-heading: #2d2e32;
+    --co-color-text: #1e1e24;
+    --co-color-text-secondary: #696a6e;
+    --co-color-text-muted: #838489;
+    --co-color-text-subtle: #a5a6ab;
+    --co-color-text-disabled: #b9babf;
+    --co-color-text-inverted: #ffffff;
+    --co-color-success: #00b472;
+    --co-color-logo: #474a57;
+
+    /* Feedback colours have no counterpart in the frames (the design shows no
+     * error/warning state) — these are Meteor's semantic reds/ambers so alerts
+     * stay in family. */
+    --co-color-danger: #de294c;
+    --co-color-danger-surface: #fdf2f4;
+    --co-color-warning: #b25e00;
+    --co-color-warning-surface: #fdf6ee;
+    --co-color-success-surface: #eefaf5;
+    --co-color-info-surface: #f0f3ff;
+
+    /* Radii — border radius/xs + border radius/button (4), card radius as drawn
+     * on the method cards / review box (6), border radius/round (9999). */
+    --co-radius-xs: 0.25rem;
+    --co-radius-button: 0.25rem;
+    --co-radius-md: 0.375rem;
+    --co-radius-full: 9999px;
+
+    /* Spacing — scale/size/8|12|16|24|40|48 plus the 4/6/10/14 gaps measured
+     * between the frames' sections. */
+    --co-space-1: 0.25rem;
+    --co-space-1-5: 0.375rem;
+    --co-space-2: 0.5rem;
+    --co-space-2-5: 0.625rem;
+    --co-space-3: 0.75rem;
+    --co-space-3-5: 0.875rem;
+    --co-space-4: 1rem;
+    --co-space-5: 1.25rem;
+    --co-space-6: 1.5rem;
+    --co-space-7: 1.75rem;
+    --co-space-10: 2.5rem;
+    --co-space-12: 3rem;
+
+    /* Typography — font/family/body + font/family/headings are both "Inter".
+     * Inter is never fetched from a CDN at runtime: it is used when the
+     * storefront theme already provides it, otherwise the system stack wins. */
+    --co-font-family: Inter, 'Inter var', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --co-font-size-2xs: 0.75rem; /* font/size/2xs 12 */
+    --co-font-size-xs: 0.875rem; /* font/size/xs  14 */
+    --co-font-size-s: 1rem; /* font/size/s   16 */
+    --co-font-size-xl: 1.5rem; /* font/size/xl  24 */
+    --co-line-height-2xs: 1.125rem; /* font/line height/2xs 18 */
+    --co-line-height-xs: 1.375rem; /* font/line height/xs  22 */
+    --co-line-height-s: 1.625rem; /* font/line height/s   26 */
+    --co-line-height-xl: 2rem; /* font/line height/xl  32 */
+    --co-font-weight-regular: 400;
+    --co-font-weight-medium: 500;
+    --co-font-weight-semibold: 600;
+    --co-font-weight-bold: 700;
+
+    /* Sizes lifted straight off the frames. */
+    --co-control-height: 3rem; /* text field / select: 48 */
+    --co-button-height: 2.5rem; /* scale/size/40 */
+    --co-choice-size: 1rem; /* radio + checkbox: 16 */
+    --co-brand-mark-width: 2.5rem; /* payment mark chip: 40×24 */
+    --co-brand-mark-height: 1.5rem;
+    --co-thumb-size: 2.625rem; /* cart thumbnail: 42 */
+    --co-content-width: 28rem; /* centred flow column on desktop */
+    --co-aside-width: 22rem;
+
+    /* Not in the frames: the autocomplete popover needs to lift off the page. */
+    --co-shadow-popover: 0 0.25rem 0.75rem rgb(9 9 11 / 8%);
+
+    /* Minimal reset — the storefront theme owns the cascade around us. */
+    box-sizing: border-box;
+    color: var(--co-color-text);
+    font-family: var(--co-font-family);
+    font-size: var(--co-font-size-xs);
+    font-weight: var(--co-font-weight-regular);
+    line-height: var(--co-line-height-xs);
+    text-align: left;
+    -webkit-font-smoothing: antialiased;
+}
+
+#checkout-app *,
+#checkout-app *::before,
+#checkout-app *::after {
+    box-sizing: inherit;
+}
+
+#checkout-app h1,
+#checkout-app h2,
+#checkout-app h3,
+#checkout-app h4,
+#checkout-app p,
+#checkout-app dl,
+#checkout-app dd,
+#checkout-app dt,
+#checkout-app ul,
+#checkout-app ol,
+#checkout-app li,
+#checkout-app figure {
+    margin: 0;
+    padding: 0;
+}
+
+#checkout-app ul,
+#checkout-app ol {
+    list-style: none;
+}
+
+#checkout-app fieldset {
+    border: 0;
+    margin: 0;
+    min-width: 0;
+    padding: 0;
+}
+
+#checkout-app legend {
+    padding: 0;
+}
+
+#checkout-app button,
+#checkout-app input,
+#checkout-app select,
+#checkout-app textarea {
+    color: inherit;
+    font: inherit;
+    letter-spacing: inherit;
+    margin: 0;
+}
+
+#checkout-app button {
+    background: none;
+    border: 0;
+    cursor: pointer;
+    text-align: inherit;
+}
+
+#checkout-app img,
+#checkout-app svg {
+    max-width: 100%;
+}
+
+#checkout-app :focus-visible {
+    outline: 2px solid var(--co-color-brand);
+    outline-offset: 2px;
+}
+
+/* Screen-reader-only. The design labels every form control with a placeholder
+ * instead of a visible label, so the real <label> stays in the accessibility
+ * tree but off-screen — same for headings that exist only as landmark names. */
+#checkout-app .c-field__label,
+#checkout-app .c-summary:not(.c-summary--open) .c-summary__heading,
+#checkout-app .v-address__login-question,
+#checkout-app .v-payment__heading,
+#checkout-app .c-address-form__legend--hidden,
+#checkout-app .v-payment__review-edit .c-method-list__heading,
+#checkout-app .c-promotion__heading,
+#checkout-app .c-promotion__label {
+    border: 0;
+    clip-path: inset(50%);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}
+
+/* ------------------------------------------------------------------- SHELL */
+
+#checkout-app .checkout {
+    background: var(--co-color-surface);
+    margin: 0 auto;
+    max-width: 100%;
+    padding: 0 0 var(--co-space-10);
+}
+
+#checkout-app .checkout__header {
+    padding: var(--co-space-4) var(--co-space-4) 0;
+}
+
+#checkout-app .checkout__shop-name {
+    color: var(--co-color-logo);
+    font-size: var(--co-font-size-xl);
+    font-weight: var(--co-font-weight-bold);
+    line-height: var(--co-line-height-xl);
+}
+
+#checkout-app .checkout__layout {
+    display: grid;
+    gap: var(--co-space-6);
+}
+
+#checkout-app .checkout__main {
+    min-width: 0;
+    padding: 0 var(--co-space-4);
+}
+
+/* Mobile: the order summary band sits directly under the step indicator, so it
+ * has to come *before* the form even though it is markup-wise the aside. */
+#checkout-app .checkout__aside {
+    min-width: 0;
+    order: -1;
+}
+
+#checkout-app .checkout__retry {
+    background: var(--co-color-brand);
+    border-radius: var(--co-radius-button);
+    color: var(--co-color-text-inverted);
+    font-weight: var(--co-font-weight-semibold);
+    margin-top: var(--co-space-2);
+    padding: 0 var(--co-space-4);
+    height: var(--co-button-height);
+}
+
+/* ---------------------------------------------------------- STEP INDICATOR */
+
+#checkout-app .c-steps {
+    margin: var(--co-space-3-5) 0 var(--co-space-5);
+}
+
+#checkout-app .c-steps__list {
+    align-items: center;
+    display: flex;
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+}
+
+#checkout-app .c-steps__item {
+    align-items: center;
+    color: var(--co-color-text-subtle);
+    display: flex;
+    font-weight: var(--co-font-weight-medium);
+    gap: var(--co-space-1);
+    white-space: nowrap;
+}
+
+/* The hairline that runs between the two steps (Figma 440:10303). */
+#checkout-app .c-steps__item:not(:last-child) {
+    flex: 1;
+}
+
+#checkout-app .c-steps__item:not(:last-child)::after {
+    background: var(--co-color-border-subtle);
+    content: '';
+    flex: 1;
+    height: 1px;
+    margin: 0 var(--co-space-2);
+}
+
+#checkout-app .c-steps__number::after {
+    content: '.';
+}
+
+#checkout-app .c-steps__item--current {
+    color: var(--co-color-heading);
+    font-weight: var(--co-font-weight-semibold);
+}
+
+/* --------------------------------------------------------- SECTION HEADINGS */
+
+#checkout-app .v-address__heading,
+#checkout-app .c-address-form__legend,
+#checkout-app .c-method-list__heading,
+#checkout-app .c-summary__heading {
+    color: var(--co-color-heading);
+    font-size: var(--co-font-size-s);
+    font-weight: var(--co-font-weight-semibold);
+    line-height: var(--co-line-height-s);
+}
+
+/* --------------------------------------------------------------- PAYMENT MARKS */
+
+/* Row of accepted-payment marks under the summary band (Figma 441:10487…91).
+ * Driven by the shop's own payment methods — no brand assets are shipped. */
+#checkout-app .c-payment-marks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--co-space-1-5);
+    margin-bottom: var(--co-space-6);
+}
+
+#checkout-app .c-payment-marks__item {
+    align-items: center;
+    background: var(--co-color-surface);
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-xs);
+    color: var(--co-color-text-disabled);
+    display: flex;
+    height: var(--co-brand-mark-height);
+    justify-content: center;
+    padding: 0 var(--co-space-1);
+    width: var(--co-brand-mark-width);
+}
+
+#checkout-app .c-payment-marks__image {
+    display: block;
+    height: 1.125rem;
+    object-fit: contain;
+    width: 100%;
+}
+
+/* --------------------------------------------------------------------- FORMS */
+
+#checkout-app .c-field {
+    display: block;
+    position: relative;
+}
+
+#checkout-app .c-input,
+#checkout-app .c-select {
+    appearance: none;
+    background: var(--co-color-surface);
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-xs);
+    color: var(--co-color-text);
+    display: block;
+    font-size: var(--co-font-size-xs);
+    height: var(--co-control-height);
+    line-height: var(--co-line-height-xs);
+    padding: 0 var(--co-space-3) 0 var(--co-space-4);
+    width: 100%;
+}
+
+#checkout-app .c-input::placeholder {
+    color: var(--co-color-text-secondary);
+    opacity: 1;
+}
+
+/* The design's select carries the Shopware chevron-down glyph; inlined as a
+ * data URI so nothing is fetched at runtime. */
+#checkout-app .c-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath fill-rule='evenodd' clip-rule='evenodd' d='M1.70711 0.292893C1.31658 -0.0976311 0.683418 -0.0976311 0.292893 0.292893C-0.0976311 0.683418 -0.0976311 1.31658 0.292893 1.70711L4.29289 5.70711C4.68342 6.09763 5.31658 6.09763 5.70711 5.70711L9.70711 1.70711C10.0976 1.31658 10.0976 0.683418 9.70711 0.292893C9.31658 -0.0976311 8.68342 -0.0976311 8.29289 0.292893L5 3.58579L1.70711 0.292893Z' fill='%231e1e24'/%3E%3C/svg%3E");
+    background-position: right var(--co-space-4) center;
+    background-repeat: no-repeat;
+    background-size: 0.625rem 0.375rem;
+    padding-right: var(--co-space-10);
+}
+
+#checkout-app .c-input:focus,
+#checkout-app .c-select:focus {
+    border-color: var(--co-color-border-focus);
+    outline: none;
+}
+
+#checkout-app .c-input:focus-visible,
+#checkout-app .c-select:focus-visible {
+    outline: 2px solid var(--co-color-brand);
+    outline-offset: 1px;
+}
+
+#checkout-app .c-select:disabled {
+    color: var(--co-color-text-disabled);
+    cursor: not-allowed;
+}
+
+#checkout-app .c-field--invalid .c-input,
+#checkout-app .c-field--invalid .c-select {
+    border-color: var(--co-color-danger);
+}
+
+#checkout-app .c-field__hint {
+    color: var(--co-color-text-muted);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+    margin-top: var(--co-space-1);
+}
+
+#checkout-app .c-field__error,
+#checkout-app .c-checkbox__error,
+#checkout-app .c-promotion__error {
+    color: var(--co-color-danger);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+    margin-top: var(--co-space-1);
+}
+
+/* Address form rows: 14px rhythm, name + postal/city split two up. */
+#checkout-app .c-address-form__legend {
+    margin-bottom: var(--co-space-2-5);
+}
+
+#checkout-app .c-address-form__row + .c-address-form__row {
+    margin-top: var(--co-space-3-5);
+}
+
+#checkout-app .c-address-form__row--split {
+    display: grid;
+    gap: var(--co-space-2);
+    grid-template-columns: 1fr 1fr;
+}
+
+/* Anchor for the (inert) address suggestion popover. */
+#checkout-app .c-address-form__row--autocomplete {
+    position: relative;
+}
+
+/* Second (billing) fieldset — same rhythm, its own top gap. */
+#checkout-app .v-address__billing-toggle {
+    margin-top: var(--co-space-3-5);
+}
+
+#checkout-app .v-address__billing {
+    display: block;
+    margin-top: var(--co-space-5);
+}
+
+/* -------------------------------------------------------------- CHECKBOX */
+
+#checkout-app .c-checkbox {
+    align-items: flex-start;
+    display: grid;
+    gap: 0 var(--co-space-2);
+    grid-template-columns: var(--co-choice-size) 1fr;
+}
+
+#checkout-app .c-checkbox__input {
+    appearance: none;
+    background: var(--co-color-surface);
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-xs);
+    cursor: pointer;
+    flex: none;
+    height: var(--co-choice-size);
+    margin-top: 0.0625rem;
+    width: var(--co-choice-size);
+}
+
+#checkout-app .c-checkbox__input:checked {
+    background-color: var(--co-color-brand);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8' viewBox='0 0 10 8' fill='none'%3E%3Cpath d='M1 4.2 3.6 6.8 9 1.2' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: 0.625rem 0.5rem;
+    border-color: var(--co-color-brand);
+}
+
+#checkout-app .c-checkbox--invalid .c-checkbox__input {
+    border-color: var(--co-color-danger);
+}
+
+#checkout-app .c-checkbox__label {
+    color: var(--co-color-text-secondary);
+    cursor: pointer;
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+}
+
+#checkout-app .c-checkbox__error {
+    grid-column: 2;
+}
+
+/* ------------------------------------------------------- ADDRESS AUTOCOMPLETE */
+
+#checkout-app .c-autocomplete {
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: calc(100% + var(--co-space-1));
+    z-index: 20;
+}
+
+#checkout-app .c-autocomplete__list {
+    background: var(--co-color-surface);
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-xs);
+    box-shadow: var(--co-shadow-popover);
+    overflow: hidden;
+    padding: var(--co-space-1) 0;
+}
+
+#checkout-app .c-autocomplete__option {
+    color: var(--co-color-text);
+    display: block;
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+    padding: var(--co-space-1) var(--co-space-3);
+    width: 100%;
+}
+
+#checkout-app .c-autocomplete__option:hover,
+#checkout-app .c-autocomplete__option:focus-visible {
+    background: var(--co-color-surface-muted);
+}
+
+#checkout-app .c-autocomplete__match {
+    font-weight: var(--co-font-weight-bold);
+}
+
+/* --------------------------------------------------------------- METHOD LISTS */
+
+#checkout-app .c-method-list {
+    margin-top: var(--co-space-6);
+}
+
+#checkout-app .c-method-list__heading {
+    margin-bottom: var(--co-space-4);
+}
+
+#checkout-app .c-method-card {
+    align-items: center;
+    display: flex;
+    gap: var(--co-space-2);
+    min-height: 3.5rem;
+    padding: var(--co-space-2) var(--co-space-3-5);
+}
+
+/* Radio: 16px ring, blue with a white inner ring once selected. */
+#checkout-app .c-method-card__input {
+    appearance: none;
+    background: var(--co-color-surface);
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-full);
+    cursor: pointer;
+    flex: none;
+    height: var(--co-choice-size);
+    width: var(--co-choice-size);
+}
+
+#checkout-app .c-method-card__input:checked {
+    background: var(--co-color-brand);
+    border-color: var(--co-color-brand);
+    box-shadow: inset 0 0 0 0.1875rem var(--co-color-surface);
+}
+
+#checkout-app .c-method-card__input:disabled {
+    cursor: not-allowed;
+}
+
+#checkout-app .c-method-card__label {
+    align-items: center;
+    cursor: pointer;
+    display: flex;
+    flex: 1;
+    gap: var(--co-space-2);
+    min-width: 0;
+}
+
+#checkout-app .c-method-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+#checkout-app .c-method-card__title {
+    color: var(--co-color-text);
+    font-size: var(--co-font-size-xs);
+    line-height: var(--co-line-height-xs);
+}
+
+/* Only the payment rows bolden their selected label; the shipping cards keep a
+ * regular weight and lean on the blue ring instead. */
+#checkout-app .c-method-list--payment .c-method-card--selected .c-method-card__title {
+    font-weight: var(--co-font-weight-semibold);
+}
+
+#checkout-app .c-method-card__description,
+#checkout-app .c-method-card__meta {
+    color: var(--co-color-text-secondary);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+}
+
+#checkout-app .c-method-card__price {
+    color: var(--co-color-text-secondary);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+    order: 3;
+    white-space: nowrap;
+}
+
+#checkout-app .c-method-card__price--free {
+    color: var(--co-color-success);
+}
+
+/* Media coming from the store-api, plus the neutral fallback glyph — both wear
+ * the design's 40×24 bordered chip. */
+#checkout-app .c-method-card__image,
+#checkout-app .c-method-card__icon {
+    background: var(--co-color-surface);
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-xs);
+    color: var(--co-color-text-disabled);
+    flex: none;
+    height: var(--co-brand-mark-height);
+    order: 2;
+    padding: 0.125rem var(--co-space-1);
+    width: var(--co-brand-mark-width);
+}
+
+#checkout-app .c-method-card__image {
+    display: block;
+    object-fit: contain;
+}
+
+#checkout-app .c-method-card__icon {
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+
+#checkout-app .c-method-card--disabled .c-method-card__title,
+#checkout-app .c-method-card--disabled .c-method-card__description,
+#checkout-app .c-method-card--disabled .c-method-card__meta,
+#checkout-app .c-method-card--disabled .c-method-card__price {
+    color: var(--co-color-text-disabled);
+}
+
+#checkout-app .c-method-card--disabled .c-method-card__label {
+    cursor: not-allowed;
+}
+
+/* Shipping: standalone cards, 14px apart, blue ring when selected. */
+#checkout-app .c-method-list--shipping .c-method-list__items {
+    display: grid;
+    gap: var(--co-space-3-5);
+}
+
+#checkout-app .c-method-list--shipping .c-method-card {
+    background: var(--co-color-surface);
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-md);
+}
+
+#checkout-app .c-method-list--shipping .c-method-card--selected {
+    border-color: var(--co-color-brand);
+}
+
+/* Shipping rows carry no icon in the design. */
+#checkout-app .c-method-list--shipping .c-method-card__icon {
+    display: none;
+}
+
+/* Payment: one bordered container, hairline between the rows. */
+#checkout-app .c-method-list--payment .c-method-list__items {
+    background: var(--co-color-surface);
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-md);
+    overflow: hidden;
+}
+
+#checkout-app .c-method-list--payment .c-method-list__item + .c-method-list__item {
+    border-top: 1px solid var(--co-color-border-subtle);
+}
+
+/* ------------------------------------------------------------ ORDER SUMMARY */
+
+/*
+ * Collapsed (Figma 442:10664) and expanded (425:9327) share one grid:
+ *   collapsed → "count total" / "promo toggle"
+ *   expanded  → "heading" / "body" / "· toggle"
+ * On mobile the band bleeds to the edges of the app container; from 60rem it
+ * turns into the sticky aside card.
+ */
+#checkout-app .c-summary {
+    align-items: center;
+    background: var(--co-color-surface-muted);
+    border-bottom: 1px solid var(--co-color-border-muted);
+    border-top: 1px solid var(--co-color-border-muted);
+    column-gap: var(--co-space-2);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    padding: var(--co-space-3-5) var(--co-space-4) var(--co-space-4);
+    row-gap: var(--co-space-2-5);
+}
+
+#checkout-app .c-summary__count,
+#checkout-app .c-summary__total {
+    color: var(--co-color-heading);
+    font-weight: var(--co-font-weight-bold);
+}
+
+#checkout-app .c-summary__total {
+    grid-column: 2;
+    text-align: right;
+}
+
+#checkout-app .c-summary__promo {
+    align-items: center;
+    color: var(--co-color-text-muted);
+    display: flex;
+    gap: var(--co-space-1-5);
+    grid-column: 1;
+    font-weight: var(--co-font-weight-medium);
+}
+
+#checkout-app .c-summary__promo .c-icon--tag {
+    color: var(--co-color-text-muted);
+    flex: none;
+}
+
+#checkout-app .c-summary__toggle {
+    align-items: center;
+    color: var(--co-color-brand);
+    display: flex;
+    font-weight: var(--co-font-weight-semibold);
+    gap: var(--co-space-1);
+    grid-column: 2;
+    justify-self: end;
+    padding: 0;
+}
+
+#checkout-app .c-summary__toggle .c-icon--chevron {
+    flex: none;
+    transition: transform 120ms ease-out;
+}
+
+#checkout-app .c-summary--open .c-summary__toggle .c-icon--chevron {
+    transform: rotate(180deg);
+}
+
+/* Expanded: heading, then the details, and the toggle drops to the bottom
+ * right — explicit rows, because auto-placement follows the DOM order. */
+#checkout-app .c-summary--open .c-summary__heading {
+    grid-column: 1 / -1;
+    grid-row: 1;
+}
+
+#checkout-app .c-summary--open .c-summary__body {
+    grid-row: 2;
+}
+
+#checkout-app .c-summary--open .c-summary__toggle {
+    grid-row: 3;
+}
+
+#checkout-app .c-summary__body {
+    grid-column: 1 / -1;
+}
+
+#checkout-app .c-summary__items {
+    margin: var(--co-space-2) 0 var(--co-space-4);
+}
+
+#checkout-app .c-line-item {
+    align-items: center;
+    display: flex;
+    gap: var(--co-space-4);
+    padding-block: var(--co-space-2);
+}
+
+#checkout-app .c-line-item__image {
+    border-radius: var(--co-radius-xs);
+    flex: none;
+    height: var(--co-thumb-size);
+    object-fit: cover;
+    width: var(--co-thumb-size);
+}
+
+#checkout-app .c-line-item__body {
+    flex: 1;
+    min-width: 0;
+}
+
+#checkout-app .c-line-item__label {
+    color: var(--co-color-text);
+    font-size: var(--co-font-size-xs);
+    font-weight: var(--co-font-weight-regular);
+    line-height: var(--co-line-height-xs);
+}
+
+#checkout-app .c-line-item__options,
+#checkout-app .c-line-item__quantity {
+    color: var(--co-color-text-muted);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+}
+
+#checkout-app .c-line-item__option + .c-line-item__option::before {
+    content: ' · ';
+}
+
+#checkout-app .c-line-item__price {
+    color: var(--co-color-heading);
+    font-weight: var(--co-font-weight-bold);
+    white-space: nowrap;
+}
+
+/* Totals: label left, amount right, hairline above the grand total. */
+#checkout-app .c-price-totals__row {
+    display: flex;
+    gap: var(--co-space-4);
+    justify-content: space-between;
+    padding-block: var(--co-space-1-5);
+}
+
+#checkout-app .c-price-totals__label {
+    color: var(--co-color-text);
+}
+
+#checkout-app .c-price-totals__value {
+    text-align: right;
+    white-space: nowrap;
+}
+
+#checkout-app .c-price-totals__row--promotion .c-price-totals__value {
+    font-weight: var(--co-font-weight-bold);
+}
+
+#checkout-app .c-price-totals__row--total {
+    border-top: 1px solid var(--co-color-border);
+    color: var(--co-color-heading);
+    font-weight: var(--co-font-weight-bold);
+    margin-top: var(--co-space-2-5);
+    padding-top: var(--co-space-3);
+}
+
+/* Promotion entry: quiet by default, the applied code shows as the design's
+ * bordered chip. */
+#checkout-app .c-promotion {
+    padding-bottom: var(--co-space-2);
+}
+
+#checkout-app .c-promotion__form {
+    display: flex;
+    gap: var(--co-space-2);
+}
+
+#checkout-app .c-promotion__input {
+    background: var(--co-color-surface);
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-xs);
+    color: var(--co-color-text);
+    flex: 1;
+    font-size: var(--co-font-size-2xs);
+    height: var(--co-button-height);
+    min-width: 0;
+    padding: 0 var(--co-space-3);
+}
+
+#checkout-app .c-promotion__input::placeholder {
+    color: var(--co-color-text-secondary);
+    opacity: 1;
+}
+
+#checkout-app .c-promotion__input:focus {
+    border-color: var(--co-color-border-focus);
+    outline: none;
+}
+
+#checkout-app .c-promotion__submit {
+    color: var(--co-color-brand);
+    flex: none;
+    font-weight: var(--co-font-weight-semibold);
+    padding: 0 var(--co-space-2);
+}
+
+#checkout-app .c-promotion__submit:disabled {
+    color: var(--co-color-text-disabled);
+    cursor: not-allowed;
+}
+
+#checkout-app .c-promotion__applied {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--co-space-2);
+    margin-top: var(--co-space-2);
+}
+
+#checkout-app .c-promotion__chip {
+    align-items: center;
+    background: var(--co-color-surface);
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-xs);
+    display: flex;
+    gap: var(--co-space-1-5);
+    padding: var(--co-space-1) var(--co-space-2);
+}
+
+#checkout-app .c-promotion__chip .c-icon--tag {
+    color: var(--co-color-text-muted);
+    flex: none;
+}
+
+#checkout-app .c-promotion__chip-label {
+    color: var(--co-color-heading);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+}
+
+#checkout-app .c-promotion__chip-remove {
+    color: var(--co-color-text-muted);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+    padding: 0;
+    text-decoration: underline;
+}
+
+#checkout-app .c-promotion__chip-remove:disabled {
+    color: var(--co-color-text-disabled);
+    cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------- FEEDBACK */
+
+#checkout-app .c-alert {
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-xs);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+    margin-bottom: var(--co-space-3);
+    padding: var(--co-space-2-5) var(--co-space-3);
+}
+
+#checkout-app .c-alert__title {
+    font-weight: var(--co-font-weight-semibold);
+}
+
+#checkout-app .c-alert--error {
+    background: var(--co-color-danger-surface);
+    border-color: var(--co-color-danger);
+    color: var(--co-color-danger);
+}
+
+#checkout-app .c-alert--warning {
+    background: var(--co-color-warning-surface);
+    border-color: var(--co-color-warning);
+    color: var(--co-color-warning);
+}
+
+#checkout-app .c-alert--success {
+    background: var(--co-color-success-surface);
+    border-color: var(--co-color-success);
+    color: var(--co-color-heading);
+}
+
+#checkout-app .c-alert--info {
+    background: var(--co-color-info-surface);
+    border-color: var(--co-color-border-muted);
+    color: var(--co-color-text-secondary);
+}
+
+#checkout-app .c-cart-errors {
+    margin-bottom: var(--co-space-2);
+}
+
+#checkout-app .c-loading {
+    align-items: center;
+    color: var(--co-color-text-muted);
+    display: flex;
+    font-size: var(--co-font-size-2xs);
+    gap: var(--co-space-2);
+    justify-content: center;
+    line-height: var(--co-line-height-2xs);
+    padding: var(--co-space-4);
+}
+
+#checkout-app .c-loading__spinner {
+    animation: checkout-spin 0.9s linear infinite;
+    border: 2px solid var(--co-color-border);
+    border-radius: var(--co-radius-full);
+    border-top-color: var(--co-color-brand);
+    display: inline-block;
+    flex: none;
+    height: 0.875rem;
+    width: 0.875rem;
+}
+
+@keyframes checkout-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #checkout-app .c-loading__spinner {
+        animation-duration: 2.4s;
+    }
+
+    #checkout-app .c-summary__toggle .c-icon--chevron {
+        transition: none;
+    }
+}
+
+/* ------------------------------------------------------------------ BUTTONS */
+
+#checkout-app .v-address__submit,
+#checkout-app .v-payment__submit {
+    align-items: center;
+    background: var(--co-color-brand);
+    border-radius: var(--co-radius-button);
+    color: var(--co-color-text-inverted);
+    display: flex;
+    font-size: var(--co-font-size-xs);
+    font-weight: var(--co-font-weight-semibold);
+    height: var(--co-button-height);
+    justify-content: center;
+    line-height: var(--co-line-height-xs);
+    padding: 0 var(--co-space-4);
+    width: 100%;
+}
+
+#checkout-app .v-address__submit:disabled,
+#checkout-app .v-payment__submit:disabled {
+    background: var(--co-color-brand-disabled);
+    cursor: not-allowed;
+}
+
+#checkout-app .v-address__actions,
+#checkout-app .v-payment__actions {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: var(--co-space-3);
+    margin-top: var(--co-space-7);
+}
+
+/* Text links (log in, edit, back, continue shopping). */
+#checkout-app .v-address__login-link,
+#checkout-app .v-payment__edit,
+#checkout-app .v-payment__back,
+#checkout-app .v-success__link,
+#checkout-app .v-empty__link {
+    background: none;
+    border: 0;
+    color: var(--co-color-brand);
+    font-weight: var(--co-font-weight-semibold);
+    padding: 0;
+    text-decoration: none;
+}
+
+#checkout-app .v-address__login-link:hover,
+#checkout-app .v-payment__edit:hover,
+#checkout-app .v-payment__back:hover,
+#checkout-app .v-success__link:hover,
+#checkout-app .v-empty__link:hover {
+    text-decoration: underline;
+}
+
+/* ------------------------------------------------------------ STEP 1: ADDRESS */
+
+#checkout-app .v-address__contact-header {
+    align-items: baseline;
+    display: flex;
+    gap: var(--co-space-4);
+    justify-content: space-between;
+    margin-bottom: var(--co-space-2-5);
+}
+
+#checkout-app .v-address__login {
+    color: var(--co-color-text-secondary);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+    text-align: right;
+}
+
+#checkout-app .v-address__login-link {
+    font-size: var(--co-font-size-xs);
+    line-height: var(--co-line-height-xs);
+    white-space: nowrap;
+}
+
+#checkout-app .v-address__contact {
+    margin-bottom: var(--co-space-7);
+}
+
+/* ------------------------------------------------------------ STEP 2: PAYMENT */
+
+#checkout-app .v-payment__review-list {
+    background: var(--co-color-surface);
+    border: 1px solid var(--co-color-border);
+    border-radius: var(--co-radius-md);
+    overflow: hidden;
+}
+
+#checkout-app .v-payment__review-row {
+    align-items: baseline;
+    display: grid;
+    gap: 0 var(--co-space-4);
+    grid-template-columns: 4rem 1fr auto;
+    padding: var(--co-space-3) var(--co-space-3-5);
+}
+
+#checkout-app .v-payment__review-row + .v-payment__review-row {
+    border-top: 1px solid var(--co-color-border-subtle);
+}
+
+#checkout-app .v-payment__review-label {
+    color: var(--co-color-text-muted);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+}
+
+#checkout-app .v-payment__review-value {
+    color: var(--co-color-text);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+#checkout-app .v-payment__edit {
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+}
+
+/*
+ * Inline row editors (Figma 443:10698 "Delivery address to edit").
+ *
+ * The expanded row drops the narrow label column — "Delivery address" needs the
+ * full width — and gains a third grid row for the editor itself. Edit turns into
+ * a quiet "Cancel"; the surrounding summary rows stay in place.
+ */
+#checkout-app .v-payment__review-row--editing {
+    grid-template-columns: 1fr auto;
+    padding-bottom: var(--co-space-4);
+}
+
+#checkout-app .v-payment__review-row--editing .v-payment__review-label {
+    color: var(--co-color-heading);
+    font-weight: var(--co-font-weight-semibold);
+}
+
+#checkout-app .v-payment__edit--cancel {
+    color: var(--co-color-text-secondary);
+    font-weight: var(--co-font-weight-medium);
+}
+
+#checkout-app .v-payment__review-edit {
+    grid-column: 1 / -1;
+    margin-top: var(--co-space-2-5);
+}
+
+/* The row label already names the editor, so the nested fieldset legend and the
+ * shipping-method heading are hidden (see the screen-reader-only block above). */
+#checkout-app .v-payment__review-edit .c-method-list {
+    margin-top: 0;
+}
+
+#checkout-app .v-payment__review-save {
+    align-items: center;
+    background: var(--co-color-brand);
+    border-radius: var(--co-radius-button);
+    color: var(--co-color-text-inverted);
+    display: flex;
+    font-size: var(--co-font-size-xs);
+    font-weight: var(--co-font-weight-semibold);
+    height: var(--co-button-height);
+    justify-content: center;
+    line-height: var(--co-line-height-xs);
+    margin-top: var(--co-space-3-5);
+    padding: 0 var(--co-space-4);
+    width: 100%;
+}
+
+#checkout-app .v-payment__review-save:disabled {
+    background: var(--co-color-brand-disabled);
+    cursor: not-allowed;
+}
+
+#checkout-app .v-payment .c-checkbox {
+    margin-top: var(--co-space-6);
+}
+
+#checkout-app .v-payment__back {
+    align-self: center;
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+}
+
+/* ------------------------------------------------------- TERMINAL VIEWS */
+
+#checkout-app .v-success,
+#checkout-app .v-empty,
+#checkout-app .v-double-opt-in {
+    margin: 0 auto;
+    max-width: var(--co-content-width);
+    padding-top: var(--co-space-6);
+    text-align: center;
+}
+
+#checkout-app .v-success__icon {
+    align-items: center;
+    background: var(--co-color-success-surface);
+    border-radius: var(--co-radius-full);
+    color: var(--co-color-success);
+    display: inline-flex;
+    height: var(--co-space-12);
+    justify-content: center;
+    margin-bottom: var(--co-space-4);
+    width: var(--co-space-12);
+}
+
+#checkout-app .v-success__heading,
+#checkout-app .v-empty__heading,
+#checkout-app .v-double-opt-in__heading {
+    color: var(--co-color-heading);
+    font-size: var(--co-font-size-xl);
+    font-weight: var(--co-font-weight-bold);
+    line-height: var(--co-line-height-xl);
+    margin-bottom: var(--co-space-3);
+}
+
+#checkout-app .v-success__order-number {
+    color: var(--co-color-heading);
+    font-size: var(--co-font-size-s);
+    font-weight: var(--co-font-weight-semibold);
+    line-height: var(--co-line-height-s);
+}
+
+#checkout-app .v-success__email,
+#checkout-app .v-empty__text,
+#checkout-app .v-double-opt-in__text {
+    color: var(--co-color-text-secondary);
+}
+
+#checkout-app .v-success__actions,
+#checkout-app .v-empty__actions {
+    margin-top: var(--co-space-6);
+}
+
+/* --------------------------------------------------------------- BREAKPOINTS */
+
+/* From 30rem the whole flow becomes a centred column — the frames are 376px
+ * wide and the design does not want a stretched form. */
+@media (min-width: 30rem) {
+    #checkout-app .checkout {
+        max-width: 30rem;
+    }
+}
+
+/* From 60rem the summary leaves the flow and becomes a sticky aside card. */
+@media (min-width: 60rem) {
+    #checkout-app .checkout {
+        max-width: 62rem;
+        padding-inline: var(--co-space-6);
+    }
+
+    #checkout-app .checkout__header {
+        padding-inline: 0;
+    }
+
+    #checkout-app .checkout__main {
+        grid-column: 1;
+        grid-row: 1;
+        max-width: var(--co-content-width);
+        padding-inline: 0;
+        width: 100%;
+    }
+
+    /* Keep the indicator on the width of the flow column instead of letting the
+     * hairline stretch across the whole page. */
+    #checkout-app .c-steps__list {
+        max-width: var(--co-content-width);
+    }
+
+    #checkout-app .checkout__layout {
+        align-items: start;
+        gap: var(--co-space-12);
+        grid-template-columns: minmax(0, var(--co-content-width)) var(--co-aside-width);
+        justify-content: space-between;
+    }
+
+    #checkout-app .checkout__aside {
+        grid-column: 2;
+        grid-row: 1;
+        order: 0;
+        position: sticky;
+        top: var(--co-space-6);
+    }
+
+    #checkout-app .c-summary {
+        border: 1px solid var(--co-color-border);
+        border-radius: var(--co-radius-md);
+    }
+}
+
+/* ----------------------------------------------------- ACCOUNT / LOGIN (subscriptions) */
+
+/*
+ * The "Log in" affordance used to be a stub anchor; it is a button now that
+ * opens the inline login. Reset the button chrome so it keeps the link look.
+ */
+#checkout-app .v-address__login-link {
+    background: none;
+    border: 0;
+    color: var(--co-color-brand);
+    cursor: pointer;
+    font: inherit;
+    font-weight: var(--co-font-weight-semibold);
+    padding: 0;
+    text-decoration: underline;
+}
+
+#checkout-app .c-login {
+    border: 1px solid var(--co-color-border-subtle);
+    border-radius: var(--co-radius-md);
+    display: grid;
+    gap: var(--co-space-3);
+    margin-bottom: var(--co-space-4);
+    padding: var(--co-space-4);
+}
+
+#checkout-app .c-login__heading {
+    color: var(--co-color-heading);
+    font-size: var(--co-font-size-xs);
+    font-weight: var(--co-font-weight-semibold);
+    line-height: var(--co-line-height-xs);
+}
+
+#checkout-app .c-login__actions {
+    align-items: center;
+    display: flex;
+    gap: var(--co-space-4);
+}
+
+#checkout-app .c-login__submit {
+    background: var(--co-color-brand);
+    border: 0;
+    border-radius: var(--co-radius-button);
+    color: var(--co-color-text-inverted);
+    cursor: pointer;
+    font: inherit;
+    font-weight: var(--co-font-weight-semibold);
+    height: var(--co-button-height);
+    padding-inline: var(--co-space-5);
+}
+
+#checkout-app .c-login__submit:disabled {
+    background: var(--co-color-brand-disabled);
+    cursor: not-allowed;
+}
+
+#checkout-app .c-login__cancel {
+    background: none;
+    border: 0;
+    color: var(--co-color-text-secondary);
+    cursor: pointer;
+    font: inherit;
+    padding: 0;
+    text-decoration: underline;
+}
+
+/* ------------------------------------------------------- SUBSCRIPTION BUNDLES */
+
+/*
+ * One box per recurring bundle in the order summary. Same surface as the
+ * summary card, separated by the subtle border so it reads as a group of the
+ * items above rather than a second card.
+ */
+#checkout-app .c-subscription-group {
+    border: 1px solid var(--co-color-border-subtle);
+    border-radius: var(--co-radius-md);
+    margin: var(--co-space-2) 0 var(--co-space-4);
+    padding: var(--co-space-3) var(--co-space-3-5);
+}
+
+#checkout-app .c-subscription-group__header {
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--co-space-2);
+    justify-content: space-between;
+}
+
+#checkout-app .c-subscription-group__title {
+    color: var(--co-color-heading);
+    font-size: var(--co-font-size-xs);
+    font-weight: var(--co-font-weight-semibold);
+    line-height: var(--co-line-height-xs);
+}
+
+#checkout-app .c-subscription-group__badge {
+    background: var(--co-color-info-surface);
+    border-radius: var(--co-radius-full);
+    color: var(--co-color-brand);
+    font-size: var(--co-font-size-2xs);
+    font-weight: var(--co-font-weight-semibold);
+    line-height: var(--co-line-height-2xs);
+    padding: 0 var(--co-space-2);
+}
+
+#checkout-app .c-subscription-group__meta,
+#checkout-app .c-subscription-group__shipping {
+    color: var(--co-color-text-muted);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+}
+
+#checkout-app .c-subscription-group__meta-item + .c-subscription-group__meta-item::before {
+    content: ' · ';
+}
+
+#checkout-app .c-subscription-group__items {
+    margin: var(--co-space-1) 0;
+}
+
+#checkout-app .c-subscription-group__shipping {
+    border-top: 1px solid var(--co-color-border-muted);
+    padding-top: var(--co-space-2);
+}
+
+/* Recurring totals follow the grand total; quieter, since today's charge is the grand total. */
+#checkout-app .c-price-totals__row--recurring {
+    color: var(--co-color-text-secondary);
+    font-size: var(--co-font-size-xs);
+    line-height: var(--co-line-height-xs);
+}
+
+#checkout-app .c-price-totals__row--total + .c-price-totals__row--recurring {
+    margin-top: var(--co-space-2);
+}
+
+/* Per-bundle shipping select under the order's shipping methods. */
+#checkout-app .c-method-list__subscription {
+    margin-top: var(--co-space-4);
+}
+
+/* Step 2 review: the order's method, then one line per bundle. */
+#checkout-app .v-payment__review-line {
+    display: block;
+}
+
+#checkout-app .v-payment__review-line--sub {
+    color: var(--co-color-text-muted);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+}
+
+#checkout-app .v-payment__disclaimer {
+    color: var(--co-color-text-secondary);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+    margin-bottom: var(--co-space-3);
+}
+
+/* Success: the subscriptions the order created. */
+#checkout-app .v-success__subscriptions {
+    border: 1px solid var(--co-color-border-subtle);
+    border-radius: var(--co-radius-md);
+    margin: var(--co-space-4) auto 0;
+    max-width: var(--co-content-width);
+    padding: var(--co-space-4);
+    text-align: left;
+}
+
+#checkout-app .v-success__subscriptions-heading {
+    color: var(--co-color-heading);
+    font-size: var(--co-font-size-xs);
+    font-weight: var(--co-font-weight-semibold);
+    line-height: var(--co-line-height-xs);
+    margin-bottom: var(--co-space-2);
+}
+
+#checkout-app .v-success__subscription + .v-success__subscription {
+    margin-top: var(--co-space-1);
+}
+
+#checkout-app .v-success__subscriptions-note {
+    color: var(--co-color-text-muted);
+    font-size: var(--co-font-size-2xs);
+    line-height: var(--co-line-height-2xs);
+    margin-top: var(--co-space-2);
+}

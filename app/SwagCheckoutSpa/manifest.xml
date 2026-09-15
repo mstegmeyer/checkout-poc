@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/shopware/shopware/trunk/src/Core/Framework/App/Manifest/Schema/manifest-3.0.xsd">
+    <meta>
+        <name>SwagCheckoutSpa</name>
+        <label>Checkout SPA</label>
+        <label lang="de-DE">Checkout SPA</label>
+        <description>Replaces the storefront checkout with a standalone single page checkout that talks to the store-api only.</description>
+        <description lang="de-DE">Ersetzt den Storefront-Checkout durch einen eigenständigen Single-Page-Checkout, der ausschließlich die Store-API nutzt.</description>
+        <author>shopware AG</author>
+        <copyright>(c) by shopware AG</copyright>
+        <version>1.0.0</version>
+        <license>MIT</license>
+    </meta>
+
+    <storefront>
+        <template-load-priority>-1</template-load-priority>
+    </storefront>
+</manifest>
